@@ -1,0 +1,20 @@
+[workspace]
+authors = ["Aurainting <aurumting@outlook.com>"]
+channels = ["conda-forge"]
+name = "g1-simulator"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+configure = "cmake -S . -B build/"
+build = { cmd = "cmake --build build/ --parallel", depends-on = ["configure"] }
+start = { cmd = "./g1-simulator", cwd = "build/", depends-on = ["build"] }
+
+[dependencies]
+yaml-cpp = ">=0.8.0,<0.9"
+spdlog = ">=1.16.0,<2"
+boost = ">=1.85.0,<2"
+mujoco = ">=3.3.7,<4"
+eigen = ">=3.4.0,<4"
+fmt = ">=12.0.0,<13"
+glfw = ">=3.4,<4"
