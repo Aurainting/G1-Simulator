@@ -107,9 +107,9 @@ enum class G1JointIndex : int {
   RightWristYaw = 28    // NOTE INVALID for g1 23dof
 };
 
-class G1Example {
+class G1Move {
 public:
-  explicit G1Example(const std::string& networkInterface = "lo");
+  explicit G1Move(const std::string& networkInterface = "lo");
 
   static void Run();
 

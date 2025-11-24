@@ -557,7 +557,7 @@ int main(const int argc, char** argv) {
                                     param::config.robot_scene.c_str());
 
   // start g1 move thread
-  std::thread g1_move_thread(G1Example::Run);
+  std::thread g1_move_thread(G1Move::Run);
 
   // start simulation UI loop (blocking call)
   glfwSetKeyCallback(

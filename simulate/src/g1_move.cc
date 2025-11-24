@@ -1,10 +1,8 @@
-#include <chrono>
-#include <thread>
-#include <cmath>
-
 #include "g1_move.h"
 
-uint32_t G1Example::Crc32Core(const uint32_t* ptr, const uint32_t len) {
+#include <cmath>
+
+uint32_t G1Move::Crc32Core(const uint32_t* ptr, const uint32_t len) {
   uint32_t x_bit = 0;
   uint32_t data = 0;
   uint32_t CRC32 = 0xFFFFFFFF;
@@ -27,7 +25,7 @@ uint32_t G1Example::Crc32Core(const uint32_t* ptr, const uint32_t len) {
   return CRC32;
 }
 
-G1Example::G1Example(const std::string& networkInterface)
+G1Move::G1Move(const std::string& networkInterface)
     : time_(0.0), control_dt_(0.002), duration_(3.0), counter_(0),
       mode_pr_(Mode::PR), mode_machine_(0), rx_{} {
   ChannelFactory::Instance()->Init(0, networkInterface);
@@ -49,37 +47,36 @@ G1Example::G1Example(const std::string& networkInterface)
   // create subscriber
   low_state_subscriber_.reset(new ChannelSubscriber<LowState_>(HG_STATE_TOPIC));
   low_state_subscriber_->InitChannel(
-      std::bind(&G1Example::LowStateHandler, this, std::placeholders::_1), 1);
+      std::bind(&G1Move::LowStateHandler, this, std::placeholders::_1), 1);
   imu_torso_subscriber_.reset(new ChannelSubscriber<IMUState_>(HG_IMU_TORSO));
   imu_torso_subscriber_->InitChannel(
-      std::bind(&G1Example::imuTorsoHandler, this, std::placeholders::_1), 1);
+      std::bind(&G1Move::imuTorsoHandler, this, std::placeholders::_1), 1);
   // create threads
-  command_writer_ptr_ =
-      CreateRecurrentThreadEx("command_writer", UT_CPU_ID_NONE, 2000,
-                              &G1Example::LowCommandWriter, this);
+  command_writer_ptr_ = CreateRecurrentThreadEx(
+      "command_writer", UT_CPU_ID_NONE, 2000, &G1Move::LowCommandWriter, this);
   control_thread_ptr_ = CreateRecurrentThreadEx("control", UT_CPU_ID_NONE, 2000,
-                                                &G1Example::Control, this);
+                                                &G1Move::Control, this);
 }
 
-void G1Example::Run() {
-  std::cout << "Begin run G1 example..." << std::endl;
-  G1Example custom{};
+void G1Move::Run() {
+  std::cout << "Begin run G1 Move..." << std::endl;
+  G1Move custom{};
   while (true) {
     sleep(10);
   }
 }
 
-void G1Example::imuTorsoHandler(const void* message) const {
+void G1Move::imuTorsoHandler(const void* message) const {
   IMUState_ imu_torso = *static_cast<const IMUState_*>(message);
   auto& rpy = imu_torso.rpy();
   if (counter_ % 500 == 0)
     printf("IMU.torso.rpy: %.2f %.2f %.2f\n", rpy[0], rpy[1], rpy[2]);
 }
 
-void G1Example::LowStateHandler(const void* message) {
+void G1Move::LowStateHandler(const void* message) {
   LowState_ low_state = *static_cast<const LowState_*>(message);
-  if (low_state.crc() !=
-      Crc32Core(reinterpret_cast<uint32_t*>(&low_state), (sizeof(LowState_) >> 2) - 1)) {
+  if (low_state.crc() != Crc32Core(reinterpret_cast<uint32_t*>(&low_state),
+                                   (sizeof(LowState_) >> 2) - 1)) {
     std::cout << "[ERROR] CRC Error" << std::endl;
     return;
   }
@@ -162,7 +159,7 @@ void G1Example::LowStateHandler(const void* message) {
   }
 }
 
-void G1Example::LowCommandWriter() {
+void G1Move::LowCommandWriter() {
   LowCmd_ dds_low_command;
   dds_low_command.mode_pr() = static_cast<uint8_t>(mode_pr_);
   dds_low_command.mode_machine() = mode_machine_;
@@ -185,7 +182,7 @@ void G1Example::LowCommandWriter() {
   }
 }
 
-void G1Example::Control() {
+void G1Move::Control() {
   MotorCommand motor_command_tmp;
   const std::shared_ptr<const MotorState> ms = motor_state_buffer_.GetData();
 
