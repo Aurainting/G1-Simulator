@@ -1,29 +1,8 @@
 #include "g1_move.h"
 
+#include <chrono>
 #include <cmath>
-
-uint32_t G1Move::Crc32Core(const uint32_t* ptr, const uint32_t len) {
-  uint32_t x_bit = 0;
-  uint32_t data = 0;
-  uint32_t CRC32 = 0xFFFFFFFF;
-  for (uint32_t i = 0; i < len; i++) {
-    x_bit = 1 << 31;
-    data = ptr[i];
-    for (uint32_t bits = 0; bits < 32; bits++) {
-      constexpr uint32_t dwPolynomial = 0x04c11db7;
-      if (CRC32 & 0x80000000) {
-        CRC32 <<= 1;
-        CRC32 ^= dwPolynomial;
-      } else
-        CRC32 <<= 1;
-      if (data & x_bit)
-        CRC32 ^= dwPolynomial;
-
-      x_bit >>= 1;
-    }
-  }
-  return CRC32;
-}
+#include <thread>
 
 G1Move::G1Move(const std::string& networkInterface)
     : time_(0.0), control_dt_(0.002), duration_(3.0), counter_(0),
@@ -38,19 +17,22 @@ G1Move::G1Move(const std::string& networkInterface)
   while (msc_->CheckMode(form, name), !name.empty()) {
     if (msc_->ReleaseMode())
       std::cout << "Failed to switch to Release Mode\n";
-    sleep(5);
+    std::this_thread::sleep_for(std::chrono::seconds(5));
   }
 
   // create publisher
   low_cmd_publisher_.reset(new ChannelPublisher<LowCmd_>(HG_CMD_TOPIC));
   low_cmd_publisher_->InitChannel();
+
   // create subscriber
   low_state_subscriber_.reset(new ChannelSubscriber<LowState_>(HG_STATE_TOPIC));
   low_state_subscriber_->InitChannel(
       std::bind(&G1Move::LowStateHandler, this, std::placeholders::_1), 1);
+
   imu_torso_subscriber_.reset(new ChannelSubscriber<IMUState_>(HG_IMU_TORSO));
   imu_torso_subscriber_->InitChannel(
       std::bind(&G1Move::imuTorsoHandler, this, std::placeholders::_1), 1);
+
   // create threads
   command_writer_ptr_ = CreateRecurrentThreadEx(
       "command_writer", UT_CPU_ID_NONE, 2000, &G1Move::LowCommandWriter, this);
@@ -60,17 +42,10 @@ G1Move::G1Move(const std::string& networkInterface)
 
 void G1Move::Run() {
   std::cout << "Begin run G1 Move..." << std::endl;
-  G1Move custom{};
+  G1Move instance{};
   while (true) {
-    sleep(10);
+    std::this_thread::sleep_for(std::chrono::seconds(10));
   }
-}
-
-void G1Move::imuTorsoHandler(const void* message) const {
-  IMUState_ imu_torso = *static_cast<const IMUState_*>(message);
-  auto& rpy = imu_torso.rpy();
-  if (counter_ % 500 == 0)
-    printf("IMU.torso.rpy: %.2f %.2f %.2f\n", rpy[0], rpy[1], rpy[2]);
 }
 
 void G1Move::LowStateHandler(const void* message) {
@@ -159,6 +134,13 @@ void G1Move::LowStateHandler(const void* message) {
   }
 }
 
+void G1Move::imuTorsoHandler(const void* message) const {
+  IMUState_ imu_torso = *static_cast<const IMUState_*>(message);
+  auto& rpy = imu_torso.rpy();
+  if (counter_ % 500 == 0)
+    printf("IMU.torso.rpy: %.2f %.2f %.2f\n", rpy[0], rpy[1], rpy[2]);
+}
+
 void G1Move::LowCommandWriter() {
   LowCmd_ dds_low_command;
   dds_low_command.mode_pr() = static_cast<uint8_t>(mode_pr_);
@@ -244,4 +226,27 @@ void G1Move::Control() {
 
     motor_command_buffer_.SetData(motor_command_tmp);
   }
+}
+
+uint32_t G1Move::Crc32Core(const uint32_t* ptr, const uint32_t len) {
+  uint32_t x_bit = 0;
+  uint32_t data = 0;
+  uint32_t CRC32 = 0xFFFFFFFF;
+  for (uint32_t i = 0; i < len; i++) {
+    x_bit = 1 << 31;
+    data = ptr[i];
+    for (uint32_t bits = 0; bits < 32; bits++) {
+      constexpr uint32_t dwPolynomial = 0x04c11db7;
+      if (CRC32 & 0x80000000) {
+        CRC32 <<= 1;
+        CRC32 ^= dwPolynomial;
+      } else
+        CRC32 <<= 1;
+      if (data & x_bit)
+        CRC32 ^= dwPolynomial;
+
+      x_bit >>= 1;
+    }
+  }
+  return CRC32;
 }

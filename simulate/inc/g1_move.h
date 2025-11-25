@@ -113,9 +113,9 @@ public:
 
   static void Run();
 
-  void imuTorsoHandler(const void* message) const;
-
   void LowStateHandler(const void* message);
+
+  void imuTorsoHandler(const void* message) const;
 
   void LowCommandWriter();
 
