@@ -6,10 +6,7 @@
 #include <unitree/dds_wrapper/robots/go2/go2.h>
 #include <unitree/idl/hg/BmsState_.hpp>
 
-#include "param.h"
-#include "physics_joystick.h"
-
-#define MOTOR_SENSOR_NUM 3
+constexpr auto MOTOR_SENSOR_NUM = 3;
 
 class UnitreeSDK2BridgeBase {
 public:
@@ -72,6 +69,7 @@ public:
     if (lowstate->joystick) {
       lowstate->joystick->update();
     }
+
     // low cmd
     {
       std::lock_guard<std::mutex> lock(lowcmd->mutex_);
@@ -136,6 +134,7 @@ public:
       lowstate->msg_.tick() = std::round(mj_data_->time / 1e-3);
       lowstate->unlockAndPublish();
     }
+    
     // high state
     if (highstate->trylock()) {
       if (frame_pos_adr_ >= 0) {
@@ -156,6 +155,7 @@ public:
       }
       highstate->unlockAndPublish();
     }
+
     // wireless_controller
     if (wireless_controller->joystick) {
       wireless_controller->unlockAndPublish();

@@ -1,4 +1,6 @@
 #include "unitree_sdk2_bridge.h"
+#include "param.h"
+#include "physics_joystick.h"
 
 #include <unitree/robot/channel/channel_subscriber.hpp>
 
