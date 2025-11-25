@@ -52,6 +52,7 @@ struct ImuState {
   std::array<float, 3> rpy = {};
   std::array<float, 3> omega = {};
 };
+
 struct MotorCommand {
   std::array<float, G1_NUM_MOTOR> q_target = {};
   std::array<float, G1_NUM_MOTOR> dq_target = {};
@@ -59,6 +60,7 @@ struct MotorCommand {
   std::array<float, G1_NUM_MOTOR> kd = {};
   std::array<float, G1_NUM_MOTOR> tau_ff = {};
 };
+
 struct MotorState {
   std::array<float, G1_NUM_MOTOR> q = {};
   std::array<float, G1_NUM_MOTOR> dq = {};
